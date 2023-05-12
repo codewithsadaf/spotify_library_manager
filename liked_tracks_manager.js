@@ -53,18 +53,29 @@ app.get('/callback', async function(req, res){
     //Request access Token
     try {
         const result = await client.getToken(options);
-        console.log('Access Token' + result.token.access_token);
-        res.send(result);
-        //This is where its breaking right now, what is this supposed to do?
-        // const accessToken = client.accessToken.create(result);
-        // res.send(accessToken.token);
+        accessToken = result.token.access_token 
     } catch (error) {
         console.error(error.message);
         res.send('Access Token Error')
     }
+
+    //Make API request
+    axiosGetOptions = {
+        headers: {
+            'Authorization' : 'Bearer ' + accessToken
+        }
+    }
+    console.log(axiosGetOptions)
+    axios.get('https://api.spotify.com/v1/me/tracks', axiosGetOptions).then(response => {
+        res.send(response.data);
+    }).catch(error => {
+        console.error(error)
+    })
 })
 
 
+app.get('/my_tracks', async function(req, res){
+})    
 
 app.get('/', function(req, res) {
     res.send(config)
