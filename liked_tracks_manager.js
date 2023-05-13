@@ -65,15 +65,47 @@ app.get('/callback', async function(req, res){
             'Authorization' : 'Bearer ' + accessToken
         }
     }
-    axios.get('https://api.spotify.com/v1/me/tracks', axiosGetOptions).then(response => {
-        names = [];
-        for (let i = 0;  i < response.data.items.length; i++){
-            names.push(response.data.items[i].track.name)
-        }
-        res.send(names);
+    
+    endpoints = [];
+    for (let n = 0; n < 34; n++){
+        offset = n * 50;
+        endpoints.push(`https://api.spotify.com/v1/me/tracks?limit=50&offset=${offset}`)
+    }
+
+    const requests = endpoints.map(url => axios.get(url, axiosGetOptions))
+
+    axios.all(requests).then(responses => {
+        let data = [];
+        responses.forEach(resp => {
+            for (let i = 0;  i < resp.data.items.length; i++){
+                data.push(resp.data.items[i].track.name)
+            }
+        })
+        res.send(data)
     }).catch(error => {
         console.error(error)
     })
+    
+
+    // names = [];
+    // let n = 0;
+    // //while (n == 0){
+    //     let start = 0;
+    //     axios.get('https://api.spotify.com/v1/me/tracks?limit=50&offset=0', axiosGetOptions).then(response => {   
+            
+    //         chunk_length = response.data.items.length;
+    //         console.log(chunk_length)
+            
+    //         for (let i = 0;  i < chunk_length; i++){
+    //                 names.push(response.data.items[i].track.name)
+    //             }
+    //         n++;
+            
+    //     }).catch(error => {
+    //         console.error(error)
+    //     })
+    // //}
+    // res.send(names);
 })
 
 
