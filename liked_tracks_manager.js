@@ -65,9 +65,12 @@ app.get('/callback', async function(req, res){
             'Authorization' : 'Bearer ' + accessToken
         }
     }
-    console.log(axiosGetOptions)
     axios.get('https://api.spotify.com/v1/me/tracks', axiosGetOptions).then(response => {
-        res.send(response.data);
+        names = [];
+        for (let i = 0;  i < response.data.items.length; i++){
+            names.push(response.data.items[i].track.name)
+        }
+        res.send(names);
     }).catch(error => {
         console.error(error)
     })
