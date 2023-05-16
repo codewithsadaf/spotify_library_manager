@@ -1,11 +1,16 @@
 const express = require('express');
 const axios = require('axios');
+const Spotify = require('spotify-web-api-node')
 const {ClientCredentials, ResourceOwnerPassword, AuthorizationCode} = require('simple-oauth2');
+const { default: SpotifyWebApi } = require('spotify-web-api-js');
 
 var CLIENT_ID = 'ff4ce56cef1c4c8aaad752b36e6a6af0'
 var CLIENT_SECRET = 'a48b61222b214b1788512d9885dbc39a'
 var REDIRECT_URI = 'http://localhost:3000/callback/'
 var SCOPE = 'user-library-read'
+
+//Create instance of api wrapper
+var spotifyAPI = new Spotify()
 
 //Construct config object
 const config = {
@@ -53,18 +58,42 @@ app.get('/callback', async function(req, res){
     //Request access Token
     try {
         const result = await client.getToken(options);
-        console.log('Access Token' + result.token.access_token);
-        res.send(result);
-        //This is where its breaking right now, what is this supposed to do?
-        // const accessToken = client.accessToken.create(result);
-        // res.send(accessToken.token);
+        accessToken = result.token.access_token
+        spotifyAPI.setAccessToken(accessToken) 
     } catch (error) {
         console.error(error.message);
         res.send('Access Token Error')
     }
+
+
+    //use wrapper to retrieve user saved tracks
+    track_names = []
+    limit = 50 //Max # of tracks allowed by Spotify for each call
+    offset = 0 //Start with first track
+    async function retrieveTracks() {
+        try {
+            let response = await spotifyAPI.getMySavedTracks({
+                limit: limit,
+                offset: offset
+            })
+            if (response.body.items.length) {
+                for (let i = 0; i < response.body.items.length; i++) {
+                    track_names.push(response.body.items[i].track.name)
+                }
+                offset += 50; //Next chunk of 50 tracks
+                retrieveTracks();
+            } else {
+                console.log(track_names.length)
+                res.send(track_names)
+            }
+            
+        } catch(error) {
+            console.error(error)
+        }       
+    }
+
+    retrieveTracks();
 })
-
-
 
 app.get('/', function(req, res) {
     res.send(config)
