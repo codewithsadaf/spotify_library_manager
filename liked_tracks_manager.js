@@ -64,76 +64,35 @@ app.get('/callback', async function(req, res){
         console.error(error.message);
         res.send('Access Token Error')
     }
-    
+
+
     //use wrapper to retrieve user saved tracks
-    spotifyAPI.getMySavedTracks({
-        limit: 50,
-        offset: 0
-    }).then(data => {
-        console.log(data.body.items.length)
-        res.send(data.body)
-    }).catch(error => {
-        console.error(error)
-    })
-
-    // //Make API request
-    // //build header that includes access token
-    // axiosGetOptions = {
-    //     headers: {
-    //         'Authorization' : 'Bearer ' + accessToken
-    //     }
-    // }
-    
-    // //***NEEDS FIX-currently hardcoded to 1700 tracks***
-    // //Generate endpoints
-    // endpoints = [];
-    // for (let n = 0; n < 34; n++){
-    //     offset = n * 50;
-    //     endpoints.push(`https://api.spotify.com/v1/me/tracks?limit=50&offset=${offset}`)
-    // }
-
-    // //Perform get request on all endpoints, return promise, not response
-    // const requests = endpoints.map(url => axios.get(url, axiosGetOptions))
-
-    // //consolidate responses
-    // axios.all(requests).then(responses => {
-    //     let data = [];
-    //     responses.forEach(resp => {
-    //         for (let i = 0;  i < resp.data.items.length; i++){
-    //             data.push(resp.data.items[i].track.name)
-    //         }
-    //     })
-    //     res.send(data)
-    // }).catch(error => {
-    //     console.error(error)
-    // })
-    
-    //Old code used for single get call, no .map()
-    //Keeping just in case I cant generalize .map() way to any # of tracks
-
-    // names = [];
-    // let n = 0;
-    // //while (n == 0){
-    //     let start = 0;
-    //     axios.get('https://api.spotify.com/v1/me/tracks?limit=50&offset=0', axiosGetOptions).then(response => {   
+    track_names = []
+    limit = 50 //Max # of tracks allowed by Spotify for each call
+    offset = 0 //Start with first track
+    async function retrieveTracks() {
+        try {
+            let response = await spotifyAPI.getMySavedTracks({
+                limit: limit,
+                offset: offset
+            })
+            if (response.body.items.length) {
+                for (let i = 0; i < response.body.items.length; i++) {
+                    track_names.push(response.body.items[i].track.name)
+                }
+                offset += 50; //Next chunk of 50 tracks
+                retrieveTracks();
+            } else {
+                console.log(track_names.length)
+                res.send(track_names)
+            }
             
-    //         chunk_length = response.data.items.length;
-    //         console.log(chunk_length)
-            
-    //         for (let i = 0;  i < chunk_length; i++){
-    //                 names.push(response.data.items[i].track.name)
-    //             }
-    //         n++;
-            
-    //     }).catch(error => {
-    //         console.error(error)
-    //     })
-    // //}
-    // res.send(names);
-})
+        } catch(error) {
+            console.error(error)
+        }       
+    }
 
-
-app.get('/my_tracks', async function(req, res){
+    retrieveTracks();
 })
 
 app.get('/', function(req, res) {
