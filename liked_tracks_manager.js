@@ -65,38 +65,57 @@ app.get('/callback', async function(req, res){
         res.send('Access Token Error')
     }
 
-
     //use wrapper to retrieve user saved tracks
-    track_names = []
+    var tracks = []
     limit = 50 //Max # of tracks allowed by Spotify for each call
     offset = 0 //Start with first track
     async function retrieveTracks() {
         try {
+            
             let response = await spotifyAPI.getMySavedTracks({
                 limit: limit,
                 offset: offset
             })
             if (response.body.items.length) {
                 for (let i = 0; i < response.body.items.length; i++) {
-                    track_names.push(response.body.items[i].track.name)
+                    tracks.push(response.body.items[i].track.name)
                 }
                 offset += 50; //Next chunk of 50 tracks
-                retrieveTracks();
+                await retrieveTracks();
             } else {
-                console.log(track_names.length)
-                res.send(track_names)
+                console.log(tracks.length)
+                return(tracks)
             }
             
         } catch(error) {
             console.error(error)
-        }       
+        }
     }
+    await retrieveTracks();
 
-    retrieveTracks();
+    //Find duplicates
+    var duplicates = [];
+    n = 0;
+    function checkDuplicates(arr) {
+        for (let i = n + 1; i < arr.length; i++) {
+            if (arr[i] == arr[n]) {
+                duplicates.push(arr[i]);
+            }
+        }
+        if (n < arr.length - 1){
+            n++;
+            checkDuplicates(arr);
+        } else {
+            return duplicates
+        }
+    }
+    checkDuplicates(tracks);
+    console.log(duplicates.length);
+    res.send(tracks);
 })
 
 app.get('/', function(req, res) {
-    res.send(config)
+    res.send("Homepage")
 })
 
 app.listen(3000)
