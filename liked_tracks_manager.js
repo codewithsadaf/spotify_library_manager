@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path')
 const axios = require('axios');
 const Spotify = require('spotify-web-api-node')
 const {ClientCredentials, ResourceOwnerPassword, AuthorizationCode} = require('simple-oauth2');
@@ -44,7 +45,7 @@ app.get('/login', function(req, res){
 });
 
 //Redirect_uri page
-app.get('/callback', async function(req, res){
+app.get('/callback', async function(req, res) {
 
     //Retrieve Authorization code
     const {code} = req.query;
@@ -83,7 +84,7 @@ app.get('/callback', async function(req, res){
                 offset += 50; //Next chunk of 50 tracks
                 await retrieveTracks();
             } else {
-                console.log(tracks.length)
+                console.log("if youre reading this it must have worked" + localStorage.getItem("myShit"))
                 return(tracks)
             }
             
@@ -92,9 +93,15 @@ app.get('/callback', async function(req, res){
         }
     }
     await retrieveTracks();
+    res.sendFile(path.join(__dirname + '/login.html'));
+    console.log("retrieved " + tracks.length + " saved tracks");
+    // res.write("retrieved " + tracks.length + " saved tracks");
+})
+
+app.get('/duplicates',  function(req, res) {
 
     //Find duplicates
-    var duplicates = [];
+    var duplicates = []; //Feels clunky, should be able to simply use return
     n = 0;
     function checkDuplicates(arr) {
         for (let i = n + 1; i < arr.length; i++) {
@@ -106,16 +113,18 @@ app.get('/callback', async function(req, res){
             n++;
             checkDuplicates(arr);
         } else {
+            //Why can't I simply access duplicates array from return? it gives me undefined
             return duplicates
         }
     }
     checkDuplicates(tracks);
+    res.send(duplicates);
     console.log(duplicates.length);
-    res.send(tracks);
 })
 
 app.get('/', function(req, res) {
-    res.send("Homepage")
+    localStorage.setItem("myShit", "someShit")
+    res.sendFile(path.join(__dirname + '/index.html'))
 })
 
 app.listen(3000)
