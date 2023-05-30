@@ -1,14 +1,14 @@
 const express = require('express');
 const path = require('path')
 const axios = require('axios');
-const Spotify = require('spotify-web-api-node')
+const Spotify = require('spotify-web-api-node');
 const {ClientCredentials, ResourceOwnerPassword, AuthorizationCode} = require('simple-oauth2');
-const { default: SpotifyWebApi } = require('spotify-web-api-js');
 
 var CLIENT_ID = 'ff4ce56cef1c4c8aaad752b36e6a6af0'
 var CLIENT_SECRET = 'a48b61222b214b1788512d9885dbc39a'
 var REDIRECT_URI = 'http://localhost:3000/callback/'
 var SCOPE = 'user-library-read'
+var tracks = [];
 
 //Create instance of api wrapper
 var spotifyAPI = new Spotify()
@@ -67,7 +67,7 @@ app.get('/callback', async function(req, res) {
     }
 
     //use wrapper to retrieve user saved tracks
-    var tracks = []
+    
     limit = 50 //Max # of tracks allowed by Spotify for each call
     offset = 0 //Start with first track
     async function retrieveTracks() {
@@ -84,7 +84,6 @@ app.get('/callback', async function(req, res) {
                 offset += 50; //Next chunk of 50 tracks
                 await retrieveTracks();
             } else {
-                console.log("if youre reading this it must have worked" + localStorage.getItem("myShit"))
                 return(tracks)
             }
             
@@ -123,7 +122,6 @@ app.get('/duplicates',  function(req, res) {
 })
 
 app.get('/', function(req, res) {
-    localStorage.setItem("myShit", "someShit")
     res.sendFile(path.join(__dirname + '/index.html'))
 })
 
