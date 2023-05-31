@@ -79,7 +79,13 @@ app.get('/callback', async function(req, res) {
             })
             if (response.body.items.length) {
                 for (let i = 0; i < response.body.items.length; i++) {
-                    tracks.push(response.body.items[i].track.name)
+                    track_info = {
+                        name: response.body.items[i].track.name,
+                        artist: response.body.items[i].track.artists[0].name,
+                        album: response.body.items[i].track.album.name,
+                        time: response.body.items[i].track.duration_ms
+                    }
+                    tracks.push(track_info)
                 }
                 offset += 50; //Next chunk of 50 tracks
                 await retrieveTracks();
@@ -104,9 +110,10 @@ app.get('/duplicates',  function(req, res) {
     n = 0;
     function checkDuplicates(arr) {
         for (let i = n + 1; i < arr.length; i++) {
-            if (arr[i] == arr[n]) {
+            if (arr[n].name == arr[i].name && arr[n].time == arr[i].time) {
+                duplicates.push(arr[n]);
                 duplicates.push(arr[i]);
-            }
+            }         
         }
         if (n < arr.length - 1){
             n++;
