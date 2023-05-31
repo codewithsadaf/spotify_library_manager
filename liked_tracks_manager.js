@@ -1,14 +1,14 @@
 const express = require('express');
 const path = require('path')
 const axios = require('axios');
-const Spotify = require('spotify-web-api-node')
+const Spotify = require('spotify-web-api-node');
 const {ClientCredentials, ResourceOwnerPassword, AuthorizationCode} = require('simple-oauth2');
-const { default: SpotifyWebApi } = require('spotify-web-api-js');
 
 var CLIENT_ID = 'ff4ce56cef1c4c8aaad752b36e6a6af0'
 var CLIENT_SECRET = 'a48b61222b214b1788512d9885dbc39a'
 var REDIRECT_URI = 'http://localhost:3000/callback/'
 var SCOPE = 'user-library-read'
+var tracks = [];
 
 //Create instance of api wrapper
 var spotifyAPI = new Spotify()
@@ -67,7 +67,7 @@ app.get('/callback', async function(req, res) {
     }
 
     //use wrapper to retrieve user saved tracks
-    var tracks = []
+    
     limit = 50 //Max # of tracks allowed by Spotify for each call
     offset = 0 //Start with first track
     async function retrieveTracks() {
@@ -79,12 +79,17 @@ app.get('/callback', async function(req, res) {
             })
             if (response.body.items.length) {
                 for (let i = 0; i < response.body.items.length; i++) {
-                    tracks.push(response.body.items[i].track.name)
+                    track_info = {
+                        name: response.body.items[i].track.name,
+                        artist: response.body.items[i].track.artists[0].name,
+                        album: response.body.items[i].track.album.name,
+                        time: response.body.items[i].track.duration_ms
+                    }
+                    tracks.push(track_info)
                 }
                 offset += 50; //Next chunk of 50 tracks
                 await retrieveTracks();
             } else {
-                console.log("if youre reading this it must have worked" + localStorage.getItem("myShit"))
                 return(tracks)
             }
             
@@ -105,9 +110,10 @@ app.get('/duplicates',  function(req, res) {
     n = 0;
     function checkDuplicates(arr) {
         for (let i = n + 1; i < arr.length; i++) {
-            if (arr[i] == arr[n]) {
+            if (arr[n].name == arr[i].name && arr[n].time == arr[i].time) {
+                duplicates.push(arr[n]);
                 duplicates.push(arr[i]);
-            }
+            }         
         }
         if (n < arr.length - 1){
             n++;
@@ -123,7 +129,6 @@ app.get('/duplicates',  function(req, res) {
 })
 
 app.get('/', function(req, res) {
-    localStorage.setItem("myShit", "someShit")
     res.sendFile(path.join(__dirname + '/index.html'))
 })
 
