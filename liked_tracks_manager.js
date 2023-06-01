@@ -11,7 +11,7 @@ var SCOPE = 'user-library-read'
 var tracks = [];
 
 //Create instance of api wrapper
-var spotifyAPI = new Spotify()
+var spotifyAPI = new Spotify();
 
 //Construct config object
 const config = {
@@ -31,6 +31,10 @@ const client = new AuthorizationCode(config)
 
 //Create instance of express app
 var app = express()
+
+//load view engine
+app.set('views', './views');
+app.set('view engine', 'pug');
 
 //"login" page
 app.get('/login', function(req, res){
@@ -98,9 +102,8 @@ app.get('/callback', async function(req, res) {
         }
     }
     await retrieveTracks();
-    res.sendFile(path.join(__dirname + '/login.html'));
-    console.log("retrieved " + tracks.length + " saved tracks");
-    // res.write("retrieved " + tracks.length + " saved tracks");
+
+    res.render('login', {num_tracks: tracks.length});
 })
 
 app.get('/duplicates',  function(req, res) {
@@ -112,7 +115,7 @@ app.get('/duplicates',  function(req, res) {
         for (let i = n + 1; i < arr.length; i++) {
             if (arr[n].name == arr[i].name && arr[n].time == arr[i].time) {
                 duplicates.push(arr[n]);
-                duplicates.push(arr[i]);
+                //duplicates.push(arr[i]);
             }         
         }
         if (n < arr.length - 1){
@@ -124,12 +127,12 @@ app.get('/duplicates',  function(req, res) {
         }
     }
     checkDuplicates(tracks);
-    res.send(duplicates);
-    console.log(duplicates.length);
+    res.render('duplicates', duplicate_tracks= duplicates)
+    console.log('Found ' + duplicates.length + ' duplicates');
 })
 
 app.get('/', function(req, res) {
-    res.sendFile(path.join(__dirname + '/index.html'))
+    res.render('index');
 })
 
 app.listen(3000)
