@@ -1,17 +1,24 @@
 const express = require('express');
-const path = require('path')
-const axios = require('axios');
+const creds = require('./credentials.json')
 const Spotify = require('spotify-web-api-node');
 const {ClientCredentials, ResourceOwnerPassword, AuthorizationCode} = require('simple-oauth2');
+require('dotenv').config();
 
-var CLIENT_ID = 'ff4ce56cef1c4c8aaad752b36e6a6af0'
-var CLIENT_SECRET = 'a48b61222b214b1788512d9885dbc39a'
-var REDIRECT_URI = 'http://localhost:3000/callback/'
-var SCOPE = 'user-library-read'
+var CLIENT_ID = process.env.CLIENT_ID;
+var CLIENT_SECRET = process.env.CLIENT_SECRET;
+var REDIRECT_URI = 'http://localhost:3000/callback/';
+var SCOPE = 'user-library-read';
 var tracks = [];
 
 //Create instance of api wrapper
 var spotifyAPI = new Spotify();
+
+//Create instance of express app
+var app = express()
+
+//load view engine
+app.set('views', './views');
+app.set('view engine', 'pug');
 
 //Construct config object
 const config = {
@@ -28,13 +35,6 @@ const config = {
 
 //Create client instance of 'Authorization Code' grant type with config info
 const client = new AuthorizationCode(config)
-
-//Create instance of express app
-var app = express()
-
-//load view engine
-app.set('views', './views');
-app.set('view engine', 'pug');
 
 //"login" page
 app.get('/login', function(req, res){
@@ -132,6 +132,9 @@ app.get('/duplicates',  function(req, res) {
 })
 
 app.get('/', function(req, res) {
+
+    
+
     res.render('index');
 })
 
