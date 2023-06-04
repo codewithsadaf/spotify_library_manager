@@ -1,5 +1,4 @@
 const express = require('express');
-const creds = require('./credentials.json')
 const Spotify = require('spotify-web-api-node');
 const {ClientCredentials, ResourceOwnerPassword, AuthorizationCode} = require('simple-oauth2');
 require('dotenv').config();
@@ -7,8 +6,11 @@ require('dotenv').config();
 var CLIENT_ID = process.env.CLIENT_ID;
 var CLIENT_SECRET = process.env.CLIENT_SECRET;
 var REDIRECT_URI = 'http://localhost:3000/callback/';
-var SCOPE = 'user-library-read';
+var SCOPE = 'user-library-read user-library-modify';
+
+//Feels clunky, is there a better way to store these arrays?
 var tracks = [];
+var duplicates = []; 
 
 //Create instance of api wrapper
 var spotifyAPI = new Spotify();
@@ -74,6 +76,7 @@ app.get('/callback', async function(req, res) {
     
     limit = 50 //Max # of tracks allowed by Spotify for each call
     offset = 0 //Start with first track
+    tracks = []; //Ensure tracks array is empty
     async function retrieveTracks() {
         try {
             
@@ -85,9 +88,10 @@ app.get('/callback', async function(req, res) {
                 for (let i = 0; i < response.body.items.length; i++) {
                     track_info = {
                         name: response.body.items[i].track.name,
-                        artist: response.body.items[i].track.artists[0].name,
+                        artist: response.body.items[i].track.artists[0].name, //For easy recognition by user
                         album: response.body.items[i].track.album.name,
-                        time: response.body.items[i].track.duration_ms
+                        time: response.body.items[i].track.duration_ms,  //To differentiate unique tracks with the same name
+                        id: response.body.items[i].track.id //For use in "DELETE" API request
                     }
                     tracks.push(track_info)
                 }
@@ -109,33 +113,53 @@ app.get('/callback', async function(req, res) {
 app.get('/duplicates',  function(req, res) {
 
     //Find duplicates
-    var duplicates = []; //Feels clunky, should be able to simply use return
     n = 0;
+    duplicates = []; //Ensure duplicates array is empty
     function checkDuplicates(arr) {
         for (let i = n + 1; i < arr.length; i++) {
             if (arr[n].name == arr[i].name && arr[n].time == arr[i].time) {
                 duplicates.push(arr[n]);
-                //duplicates.push(arr[i]);
-            }         
+            }
         }
         if (n < arr.length - 1){
             n++;
             checkDuplicates(arr);
         } else {
             //Why can't I simply access duplicates array from return? it gives me undefined
-            return duplicates
+            return duplicates;
         }
     }
     checkDuplicates(tracks);
-    res.render('duplicates', duplicate_tracks= duplicates)
-    console.log('Found ' + duplicates.length + ' duplicates');
+    res.render('duplicates', duplicate_tracks= duplicates);
+})
+
+app.get('/remove', async function(req, res) {
+
+    //Extract ids of songs to be deleted
+    dup_ids = [];
+    for (let i = 0; i < duplicates.length; i++) {
+        dup_ids.push(duplicates[i].id);
+    }
+
+    //Delete duplicates
+    //await spotifyAPI.removeFromMySavedTracks(dup_ids);
+
+    //Check for successful deletion
+    response = await spotifyAPI.containsMySavedTracks(dup_ids);
+
+    delete_fail = false;
+    for (let i=0; i < response.body.length; i++) {
+        if (response.body[i]){
+            delete_fail = true;
+            break
+        }
+    }
+
+    res.render('remove', [duplicate_tracks= duplicates, ids= dup_ids, delete_fail= delete_fail]);
 })
 
 app.get('/', function(req, res) {
-
-    
-
     res.render('index');
 })
 
-app.listen(3000)
+app.listen(3000);
