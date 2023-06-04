@@ -2,6 +2,9 @@ doctype html
 html
     head
     body
-        //- h2 Found #{length} duplicates
+        h2 Found #{duplicate_tracks.length} duplicates
+        a.btn(href='http://localhost:3000/remove') Click to remove the following duplicate tracks:
+        br
+        br
         each track in duplicate_tracks 
-            h3 #{track.name} by #{track.artist}
+            table #{track.name}: #{track.artist}
