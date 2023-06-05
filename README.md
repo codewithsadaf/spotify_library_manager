@@ -6,7 +6,7 @@ A simple app that removes duplicate songs from a Spotify user's saved tracks. Bu
 4. Javascript
 5. Web development in general 
 
-The goal was more focused on back-end functionality, so the user-interface is very bare-bones.  User must register an app on Spotify for Developers website to obtain unique ID and Secret and manually populate .env file before accessing or modifying their Spotify tracks through this app.
+The goal was to focus more on back-end functionality, so the user-interface is very bare-bones.  User must register an app on Spotify for Developers website to obtain unique credentials and manually populate .env file before accessing or modifying their Spotify tracks through this app.
 
 ## Requirements
 This app requires Node.js and npm to be installed locally.  The following packages are also required:
